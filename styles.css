@@ -1,0 +1,117 @@
+:root {
+    --background: #211A1A;
+    --display: #3F2F2E;
+    --buttons: #2C2121;
+    --light-main: #C9A29F;
+    --light-secondary: #FFDAD6;
+    --light-contrast: #FFDEA3;
+    --text-light: #EDE0DE;
+    --text-dark: #281900;
+    --cursor-color: #b8817d;
+}
+
+* {
+    font-family: "Open Sans", sans-serif;
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    border: none;
+    /* border: 2px solid black; */
+}
+
+
+.container {
+    min-height: 100vh;
+    min-width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("./img/Valley-day.svg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: top;
+}
+
+.calculator {
+    width: calc(50vh + 20px);
+    height: 100vh;
+    min-width: 320px;
+    min-height: 600px;
+    max-width: 520px;
+    max-height: 1000px;
+    display: grid;
+    grid-gap: 10px;
+    padding: 0px 10px 10px 10px;
+    touch-action: pinch-zoom;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 5fr 1fr repeat(5, 2fr);
+    /* 1/4 width must equal 2/16 height */
+    background-color: var(--background);
+    border-radius: 20px;
+    box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}
+
+.display {
+    width: calc(100% + 20px);
+    max-height: 100%;
+    text-align: right;
+    background-color: var(--display);
+    border-radius: 20px;
+    padding: 20px;
+    transform: translateX(-10px);
+    grid-column-start: 1;
+    grid-column-end: 5;
+    grid-row-start: 1;
+    grid-row-end: 2;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-around;
+}
+
+.display-main {
+    font-size: 52px;
+    flex: 0 0 auto;
+    color: var(--text-light);
+    background-color: var(--display);
+    text-align: right;
+}
+
+.display-main:focus {
+    outline: none;
+    caret-color: var(--cursor-color);
+}
+
+.display-preview {
+    font-size: 30px;
+    flex: 0 0 auto;
+    color: var(--light-main);
+}
+
+button {
+    border-radius: 50%;
+    font-size: 20px;
+    background-color: var(--buttons);
+    color: var(--text-light);
+}
+
+.small {
+    border-radius: 20px;
+    background-color: var(--background);
+}
+
+.functions {
+    background-color: var(--light-main);
+    color: var(--text-dark);
+}
+
+.AC {
+    background-color: var(--light-contrast);
+}
+
+.equals {
+    background-color: var(--light-secondary);
+}
+
+button:active {
+    filter: brightness(1.3);
+}
