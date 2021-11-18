@@ -1,4 +1,4 @@
-:root {
+/* :root {
     --background: #211A1A;
     --display: #3F2F2E;
     --buttons: #2C2121;
@@ -8,6 +8,30 @@
     --text-light: #EDE0DE;
     --text-dark: #281900;
     --cursor-color: #b8817d;
+} */
+
+:root {
+    --background: #1b1b1e;
+    --display: #2b2d37;
+    --buttons: #222329;
+    --light-main: #a5aac0;
+    --light-secondary: #d9e2ff;
+    --light-contrast: #ffd5fd;
+    --text-light: #e0dfe3;
+    --text-dark: #0a1022;
+    --cursor-color: #91a2d0;
+}
+
+:root.day {
+    --background: #151715;
+    --display: #203028;
+    --buttons: #1d2521;
+    --light-main: #98b1a2;
+    --light-secondary: #8bf8c4;
+    --light-contrast: #b6eaff;
+    --text-light: #e6e8e4;
+    --text-dark: #050606;
+    --cursor-color: #6edba9;
 }
 
 * {
@@ -33,11 +57,11 @@
 }
 
 .calculator {
-    width: calc(45vh + 10px);
-    height: 90vh;
-    min-width: 310px;
+    width: calc(40vh + 20px);
+    height: 80vh;
+    min-width: 320px;
     min-height: 600px;
-    max-width: 510px;
+    max-width: 520px;
     max-height: 1000px;
     display: grid;
     grid-gap: 10px;
