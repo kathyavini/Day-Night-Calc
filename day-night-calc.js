@@ -7,11 +7,11 @@ let background = '';
 let colorTheme = '';
 let removeTheme = '';
 
-const testBeforeSunrise = new Date('Nov 18, 2021 03:24:00');
-const testSunrise = new Date('Nov 18, 2021 06:24:00');
-const testDay = new Date('Nov 18, 2021 09:24:00');
-const testSunset = new Date('Nov 18, 2021 17:24:00');
-const testNight = new Date('Nov 18, 2021 22:24:00');
+// const testBeforeSunrise = new Date('Nov 18, 2021 03:24:00');
+// const testSunrise = new Date('Nov 18, 2021 06:24:00');
+// const testDay = new Date('Nov 18, 2021 09:24:00');
+// const testSunset = new Date('Nov 18, 2021 17:24:00');
+// const testNight = new Date('Nov 18, 2021 22:24:00');
 
 console.log("In Vancouver...");
 

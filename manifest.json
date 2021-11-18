@@ -1,0 +1,21 @@
+{
+    "short_name": "Day/Night Calc",
+    "name": "A calculator for any time of day... in Vancouver",
+    "icons": [
+      {
+        "src": "./img/maskable_icon_x192",
+        "type": "image/png",
+        "sizes": "192x192",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "./img/maskable_icon_x512.png",
+        "type": "image/png",
+        "sizes": "512x512",
+        "purpose": "any maskable"
+      }
+    ],
+    "description": "An Android-12 themed calculator for any time of day... in Vancouver",
+    "display_override": "standalone",
+    "display": "fullscreen"
+  }

@@ -66,10 +66,9 @@
     display: grid;
     grid-gap: 10px;
     padding: 0px 10px 10px 10px;
-    touch-action: pinch-zoom;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: 5fr 1fr repeat(5, 2fr);
-    /* 1/4 width must equal 2/16 height */
+    /* 1/4 width must equal 2/16 height for round buttons*/
     background-color: var(--background);
     border-radius: 20px;
     box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
@@ -117,7 +116,7 @@ button {
     font-size: 20px;
     background-color: var(--buttons);
     color: var(--text-light);
-    transition: 0s 150ms;
+    /* transition: 0s 150ms; */
 }
 
 .small {
@@ -141,5 +140,87 @@ button {
 button:active,
 button.pressed {
     filter: brightness(1.5);
-    transition: 0s;
+    /* transition: 0s; */
+}
+
+@media (hover: none) and (orientation: landscape) {
+    .calculator {
+        width: 80vw;
+        height: calc(40vw + 20px);
+        min-height: 320px;
+        min-width: 600px;
+        max-height: 520px;
+        max-width: 1000px;
+        display: grid;
+        grid-gap: 10px;
+        padding: 0px 10px 10px 10px;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: 5fr repeat(4, 2fr);
+        background-color: var(--background);
+        border-radius: 20px;
+        box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+        grid-auto-flow: column;
+    }
+
+    .display {
+        overflow-x: auto;
+        max-height: 100%;
+        grid-column-start: 1;
+        grid-column-end: 7;
+        grid-row-start: 1;
+        grid-row-end: 2;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: space-around;
+    }
+
+    button {
+        border-radius: 20px;
+    }
+
+    .equals {
+        grid-row-start: 5;
+        grid-row-end: 6;
+        grid-column-start: 6;
+        grid-column-end: 7;
+    }
+    
+    .AC,
+    .percent,
+    .parens {
+        grid-column-start: 6;
+        grid-column-end: 7;
+    }
+
+    .multiply,
+    .subtract,
+    .add,
+    .divide {
+        grid-column-start: 5;
+        grid-column-end: 6;
+    }
+    
+    .num9,
+    .num6,
+    .num3,
+    .del {
+        grid-column-start: 4;
+        grid-column-end: 5;
+    }
+
+    .num8,
+    .num5,
+    .num2,
+    .decimal {
+        grid-column-start: 3;
+        grid-column-end: 4;
+    }
+
+    .num7,
+    .num4,
+    .num1,
+    .num0 {
+        grid-column-start: 2;
+        grid-column-end: 3;
+    }
 }

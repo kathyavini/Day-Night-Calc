@@ -243,7 +243,7 @@ window.addEventListener("keydown", (ev) => {
 
     setTimeout( () => {
         btn.classList.remove('pressed');
-    }, 0);
+    }, 150);
 });
 
 function truncateDecimals() {
