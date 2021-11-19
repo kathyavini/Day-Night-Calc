@@ -1,64 +1,75 @@
 let display = document.querySelector('.display-main');
 let preview = document.querySelector('.display-preview');
+let numbers = document.querySelectorAll('.number');
+let clear = document.querySelector('.AC');
+let decimal = document.querySelector('.decimal');
+let del = document.querySelector('.del');
+let add = document.querySelector('.add');
+let subtract = document.querySelector('.subtract');
+let divide = document.querySelector('.divide');
+let multiply = document.querySelector('.multiply');
+let equals = document.querySelector('.equals');
 
-let displayValue = '';
-let previewValue = '';
+// Some adjusts for android font sizes and small screens
+// window.getComputedStyle(display, null).getPropertyValue('font-size');
 
-let operand1 = 0;
-let operand2 = 0;
-let lastOperation = '';
-let numArray = [];
+const calc = {
+    'inputStr':'',
+    'ans': 0,
+    'displayStr':'',
+    'displayStrDec':'',
+    'displayStrNonDec':'',
+    'previewValue': 0,
+    'previewStr':'',
+    'lastOperator':'',
+    'operand1': 0,
+    'operand2': 0,
+}
 
 function updateDisplay() {
-    // Add commas to the output
-    prettifyDisplay();
-    // Adjust font sizes
-    if (displayValue.length > 9) {
-        display.style.fontSize = "42px";
+    if (!calc.displayStr) {
+        calc.displayStr = calc.inputStr;
     }
-    if (displayValue.length > 11) {
-        display.style.fontSize = "36px";
-    }
-    display.textContent = displayValue;
 
-    // Then return display to a useable form
-    // Remove prev commas - this is probably not a great method
-    if (displayValue.length > 0) {
-        numArray = displayValue.match(/[\-\.0-9]/g);
-        displayValue = numArray.join('');
-    }
+    addCommas();
+    adjustDisplayFontSize();
+
+    display.textContent = calc.displayStr;
+    calc.displayStr = '';
 }
+
 function updatePreview() {
-    preview.textContent = previewValue;
+    preview.textContent = calc.previewStr;
 }
 
-let numbers = document.querySelectorAll('.number');
+// Add event listeners
 for (let each of numbers) {
     each.addEventListener('click', () => {
-        displayValue = appendToValue(each.textContent, displayValue);
+        calc.inputStr = calc.inputStr + each.textContent;
         updateDisplay();
+        // If equals was just pressed, a new number should reset values
+        if (calc.lastOperator === returnAns) {
+            calc.operand1 = 0;
+            calc.operand2 = 0;
+        }
     });
 }
 
-let clear = document.querySelector('.AC');
+// Function buttons
 clear.addEventListener('click', () => {
-    displayValue = '';
-    previewValue = '';
+    for (key in calc) {
+        calc[key] = '';
+    }
     updateDisplay();
     updatePreview();
-    operand1 = 0;
-    operand2 = 0;
-    lastOperation = '';
-    display.style.fontSize = '52px';
 })
 
-let decimal = document.querySelector('.decimal');
 decimal.addEventListener('click', () => {
-    if (displayValue.length === 0) {
-        displayValue = appendToValue('0.', displayValue)
+    if (calc.inputStr.length === 0) {
+        calc.inputStr = '0.';
     } else {
-        if (displayValue.search(/[.]/g) === -1) {
-            displayValue = appendToValue('.', displayValue)
+        if (calc.inputStr.search(/[.]/g) === -1) {
+            calc.inputStr += '.';
         } else {
             return;
         }
@@ -66,70 +77,160 @@ decimal.addEventListener('click', () => {
     updateDisplay();
 })
 
-let del = document.querySelector('.del');
 del.addEventListener('click', () => {
-    displayValue = displayValue.slice(0, -1);
+    calc.inputStr = calc.inputStr.slice(0, -1);
     updateDisplay();
 })
 
-let add = document.querySelector('.add');
 add.addEventListener('click', () => {
     operate(addition);
 })
 
-let subtract = document.querySelector('.subtract');
 subtract.addEventListener('click', () => {
     operate(subtraction);
 })
 
-let divide = document.querySelector('.divide');
 divide.addEventListener('click', () => {
     operate(division);
 })
 
-let multiply = document.querySelector('.multiply');
 multiply.addEventListener('click', () => {
     operate(multiplication);
 })
 
-let equals = document.querySelector('.equals');
 equals.addEventListener('click', () => {
     operate(returnAns);
-    operand2 = 0;
+    // If next key is a number, the operands should clear
+    // I'll add that to the event listeners for numbers
 });
 
 // Two operand functionality
 function operate(mathFunction) {
-    if (!operand1) {
-        operand1 = +displayValue;
-        lastOperation = mathFunction;
+
+    /* --- Make more robust to bad input ----*/
+    // Pressing equals or other function buttons without input should do nothing
+    if (!calc.inputStr && mathFunction !== returnAns && 
+                calc.lastOperator !== returnAns) { // except for right after equals
+        // But you can update the operation being performed
+        calc.lastOperator = mathFunction;
+        return;
+    } else if (!calc.inputStr && mathFunction == returnAns && 
+        calc.lastOperator !== returnAns) {
+        // ignore an equals after an operation completely
+        return;
+    }
+    /* -----------------------------------*/
+
+    if (!calc.operand1) {
+        calc.operand1 = +(calc.inputStr);
+        calc.lastOperator = mathFunction;
     } else {
-        operand2 = +displayValue;
-        operand1 = lastOperation(operand1, operand2);
-        lastOperation = mathFunction;
-        displayValue = operand1.toString();
+        calc.operand2 = +(calc.inputStr);
+        calc.ans = calc.lastOperator(calc.operand1, calc.operand2);
+        calc.operand1 = calc.ans;
+        calc.displayStr = calc.ans.toString();
         truncateDecimals();
+        calc.lastOperator = mathFunction;
     }
     updateDisplay();
-    displayValue = '';
-    if (isNaN(operand1)) {
-        operand1 = 0;
+    calc.inputStr = '';
+
+    // Refresh operands - basically only for divide by 0
+    if (isNaN(calc.operand1)) {
+        calc.operand1 = 0;
     }
-    return operand1;
 }
 
 function appendToValue(item, value) {
     return value + item;
 }
 
-// Calculator Operations
 
+
+
+// Prettify functions
+function splitAtDecimal() {
+    decIndex = calc.displayStr.search((/[.]/g));
+    if (decIndex !== -1) {
+        calc.displayStrDec = calc.displayStr.substring(decIndex);
+        calc.displayStrNonDec = calc.displayStr.substring(0, decIndex);
+    } else {
+        calc.displayStrDec = calc.displayStr.substring(0, decIndex);
+        calc.displayStrNonDec = calc.displayStr.substring(decIndex);
+    }
+}
+function truncateDecimals() {
+
+    splitAtDecimal();
+
+     // Maintain existing scientific notation; don't use toFixed() then    
+     if (calc.displayStrDec.length > 4 && calc.displayStr.search((/[e]/g)) !== -1) {
+        calc.displayStr = ((+calc.displayStr).toExponential(4)).toString();
+        return;
+    }
+
+    // Truncate so that decimals + nonDecimals < 13
+    if (calc.displayStrDec.length > 9 && 
+            calc.displayStrNonDec.length <= 2) { // all decimals
+        shortFloat = (+calc.displayStr).toFixed(9);
+        calc.displayStr = shortFloat.toString();
+    } else if (calc.displayStrDec.length > 9 && 
+            calc.displayStrNonDec.length > 2 && 
+            calc.displayStrNonDec.length <= 7) { // mostly decimals
+        shortFloat = (+calc.displayStr).toFixed(6);
+        calc.displayStr = shortFloat.toString();
+    } else if (calc.displayStrDec.length > 4 && calc.displayStrNonDec.length > 7) {
+        shortFloat = (+calc.displayStr).
+            toFixed(Math.max(2, 13 - calc.displayStrNonDec.length));
+        calc.displayStr = shortFloat.toString();
+    } else
+    
+    // Apply scientific notation to large numbers
+    if (calc.displayStr.length > 13) {
+        calc.displayStr = ((+calc.displayStr).toExponential(4)).toString();
+    }
+
+}
+
+function addCommas() {
+
+    splitAtDecimal();
+
+    // Might have been better to work with the number Value, but...
+    if (calc.displayStrNonDec.length > 0) {
+        numArray = calc.displayStrNonDec.match(/[\-0-9]/g);
+        calc.displayStrNonDec = numArray.join('');
+    }
+    
+    if (calc.displayStrNonDec.length > 3) {
+        let commasString = '';
+        while (calc.displayStrNonDec.slice(0, -3).length > 0) {
+            commasString += ','+ calc.displayStrNonDec.slice(-3);
+            calc.displayStrNonDec = calc.displayStrNonDec.slice(0,-3);
+        }
+        // add any left over digits to the start
+        commasString = calc.displayStrNonDec + commasString;
+        // And re-create final string
+        calc.displayStr = commasString + calc.displayStrDec;
+    }
+}
+
+function adjustDisplayFontSize() {
+    if (calc.displayStr.length > 11) {
+        display.style.fontSize = '36px';
+    } else if (calc.displayStr.length > 9) {
+        display.style.fontSize = '42px';
+    } else display.style.fontSize = '54px'; // the default-largest
+}
+
+
+// Math Operations
 function division(a, b) {
     if (b == 0) {
-        previewValue = "Can't divide by 0";
+        calc.previewStr = "Can't divide by 0";
         updatePreview();
         setTimeout( () => {
-            previewValue = '';
+            calc.previewStr = '';
             updatePreview();
         }, 3000);
         return a;
@@ -172,6 +273,8 @@ function makePercent(a) {
 function returnAns(a, b) {
     return a;
 }
+
+
 
 // Key binds
 window.addEventListener("keydown", (ev) => {
@@ -245,60 +348,3 @@ window.addEventListener("keydown", (ev) => {
         btn.classList.remove('pressed');
     }, 150);
 });
-
-function truncateDecimals() {
-    // Truncate decimals
-    // console.log(`displayValue is ${displayValue}`);
-    // console.log(`type of displayValue is ${typeof(displayValue)}`)
-    if (displayValue.search((/[e]/g)) !== -1) { // is scientific (decimal)
-        displayValue = ((+displayValue).toExponential(3)).toString();
-    } else { // Truncate decimals
-        decIndex = displayValue.search((/[.]/g));
-        if (decIndex !== -1) {
-            decimalValues = displayValue.substring(decIndex);
-            nonDecimalValues = displayValue.substring(0, decIndex);
-            if (nonDecimalValues.length > 5) { // long string anyway
-                shortFloat = (+displayValue).toFixed(4);
-                displayValue = shortFloat.toString();
-            } else if (decimalValues.length > 9) { // needs truncating
-                shortFloat = (+displayValue).toFixed(9);
-                displayValue = shortFloat.toString();
-            }
-        }
-        if (displayValue.length > 13) { //needs sci notation applied
-            displayValue = ((+displayValue).toExponential(3)).toString();
-        }
-    }
-}
-
-function prettifyDisplay() {
-    // Add commas to non-decimal values
-    decIndex = displayValue.search((/[.]/g));
-    if (decIndex !== -1) {
-        decimalValues = displayValue.substring(decIndex);
-        nonDecimalValues = displayValue.substring(0, decIndex);
-    } else {
-        decimalValues = displayValue.substring(0, decIndex);
-        nonDecimalValues = displayValue.substring(decIndex);
-    }
-
-    // console.log(`Non-decimal values string is ${nonDecimalValues}`);
-    // console.log(`Decimal values string is ${decimalValues}`);
-    // Remove prev commas - this is probably not a great method
-    if (nonDecimalValues.length > 0) {
-        numArray = nonDecimalValues.match(/[\-0-9]/g);
-        nonDecimalValues = numArray.join('');
-    }
-    
-    if (nonDecimalValues.length > 3) {
-        let commasString = '';
-        while (nonDecimalValues.slice(0, -3).length > 0) {
-            commasString += ','+ nonDecimalValues.slice(-3);
-            nonDecimalValues = nonDecimalValues.slice(0,-3);
-        }
-        // add any left over digits to the start
-        commasString = nonDecimalValues + commasString;
-        displayValue = commasString + decimalValues;
-        displayValue = commasString + decimalValues;
-    }
-}
