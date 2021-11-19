@@ -10,8 +10,30 @@ let divide = document.querySelector('.divide');
 let multiply = document.querySelector('.multiply');
 let equals = document.querySelector('.equals');
 
+
 // Some adjusts for android font sizes and small screens
-// window.getComputedStyle(display, null).getPropertyValue('font-size');
+// (MOSTLY respect large font sizing but truncate values more)
+let floatSci;
+let floatDec;
+let maxLength;
+
+// Test for small android devices on largest font (but not landscape)
+computedFont = window.getComputedStyle(display, null).getPropertyValue('font-size').slice(0,-2);
+computedWidth = window.getComputedStyle(display, null).getPropertyValue('width').slice(0,-2);
+
+if (computedFont > 70 && computedWidth <= 300) {
+    floatSci = 3;
+    floatDec = 6;
+    maxLength = 9;
+} else if (computedFont > 60 && computedWidth <= 300) {
+    floatSci = 3;
+    floatDec = 7;
+    maxLength = 11;
+} else {
+    floatSci = 4;
+    floatDec = 9;
+    maxLength = 13;
+}
 
 const calc = {
     'inputStr':'',
@@ -164,30 +186,36 @@ function truncateDecimals() {
     splitAtDecimal();
 
      // Maintain existing scientific notation; don't use toFixed() then    
-     if (calc.displayStrDec.length > 4 && calc.displayStr.search((/[e]/g)) !== -1) {
-        calc.displayStr = ((+calc.displayStr).toExponential(4)).toString();
+     if (calc.displayStrDec.length > floatSci && 
+                calc.displayStr.search((/[e]/g)) !== -1) {
+        calc.displayStr = ((+calc.displayStr).toExponential(floatSci)).toString();
         return;
     }
 
-    // Truncate so that decimals + nonDecimals < 13
-    if (calc.displayStrDec.length > 9 && 
+    // Truncate so that decimals + nonDecimals < maxLength
+    if (calc.displayStrDec.length > floatDec && 
             calc.displayStrNonDec.length <= 2) { // all decimals
-        shortFloat = (+calc.displayStr).toFixed(9);
+        shortFloat = (+calc.displayStr).toFixed(floatDec);
         calc.displayStr = shortFloat.toString();
-    } else if (calc.displayStrDec.length > 9 && 
-            calc.displayStrNonDec.length > 2 && 
-            calc.displayStrNonDec.length <= 7) { // mostly decimals
-        shortFloat = (+calc.displayStr).toFixed(6);
+    } else if (calc.displayStrDec.length > floatDec && 
+                calc.displayStrNonDec.length > 2 && 
+                calc.displayStrNonDec.length <= maxLength - 6) { // mostly decimals
+        shortFloat = (+calc.displayStr).toFixed(floatDec - 3);
         calc.displayStr = shortFloat.toString();
-    } else if (calc.displayStrDec.length > 4 && calc.displayStrNonDec.length > 7) {
+    } else if (calc.displayStrDec.length > 4 && 
+                calc.displayStrNonDec.length > (maxLength - 6)) {
         shortFloat = (+calc.displayStr).
-            toFixed(Math.max(2, 13 - calc.displayStrNonDec.length));
+            toFixed(Math.max(2, maxLength - calc.displayStrNonDec.length));
         calc.displayStr = shortFloat.toString();
     } else
     
     // Apply scientific notation to large numbers
-    if (calc.displayStr.length > 13) {
-        calc.displayStr = ((+calc.displayStr).toExponential(4)).toString();
+    if (calc.displayStr.length > maxLength) {
+        calc.displayStr = ((+calc.displayStr).toExponential(floatSci)).toString();
+        // But remove that odd plus formatting
+        plusIndex = calc.displayStr.search((/[+]/g));
+        calc.displayStr = calc.displayStr.slice(0, plusIndex) + 
+            calc.displayStr.slice(plusIndex + 1);
     }
 
 }

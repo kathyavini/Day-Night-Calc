@@ -59,10 +59,10 @@
 .calculator {
     width: calc(40vh + 20px);
     height: 80vh;
-    min-width: 320px;
-    min-height: 600px;
     max-width: 520px;
     max-height: 1000px;
+    min-width: 340px;
+    min-height: 640px;
     display: grid;
     grid-gap: 10px;
     padding: 0px 10px 10px 10px;
@@ -72,6 +72,7 @@
     background-color: var(--background);
     border-radius: 20px;
     box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+    font-size: 54px;
 }
 
 .display {
@@ -93,7 +94,6 @@
 }
 
 .display-main {
-    font-size: 52px;
     flex: 0 0 auto;
     color: var(--text-light);
     background-color: var(--display);
@@ -147,10 +147,10 @@ button.pressed {
     .calculator {
         width: 80vw;
         height: calc(40vw + 20px);
-        min-height: 320px;
-        min-width: 600px;
         max-height: 520px;
         max-width: 1000px;
+        min-height: 340px;
+        min-width: 640px;
         display: grid;
         grid-gap: 10px;
         padding: 0px 10px 10px 10px;
