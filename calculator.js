@@ -13,6 +13,11 @@ let equals = document.querySelector('.equals');
 let power = document.querySelector('.power');
 let percent = document.querySelector('.percent');
 let pi = document.querySelector('.pi');
+let fact = document.querySelector('.factorial');
+let sqroot = document.querySelector('.root')
+
+
+let expressionEvalMode = false;
 
 
 // Some adjusts for android font sizes and small screens
@@ -71,11 +76,10 @@ function testDisplaySetFloats() {
 
 testDisplaySetFloats();
 
-// For supporting browsers:
+// For supporting browsers (Firefox and Chrome but not Safari)
 if (screen.orientation) {
     screen.orientation.addEventListener('change', testDisplaySetFloats);
 }
-
 
 const calc = {
     'inputStr':'',
@@ -102,6 +106,17 @@ function updateDisplay() {
     calc.displayStr = '';
 }
 
+function updateDisplayEval() {
+    if (!calc.displayStr) {
+        calc.displayStr = calc.inputStr;
+    }
+    
+    adjustDisplayFontSize();
+
+    display.textContent = calc.displayStr;
+    calc.displayStr = '';
+}
+
 function updatePreview() {
     preview.textContent = calc.previewStr;
 }
@@ -112,7 +127,7 @@ for (let each of numbers) {
     each.addEventListener('click', () => {
         calc.inputStr = calc.inputStr + each.textContent;
         updateDisplay();
-        // If equals was just pressed, a new number should reset values
+        // If equals was just pressed, a new number should be a reset
         if (calc.lastOperator === returnAns) {
             calc.operand1 = 0;
             calc.operand2 = 0;
@@ -120,7 +135,7 @@ for (let each of numbers) {
     });
 }
 
-// Functions
+// Function buttons
 clear.addEventListener('click', () => {
     for (key in calc) {
         calc[key] = '';
@@ -130,6 +145,26 @@ clear.addEventListener('click', () => {
 })
 
 decimal.addEventListener('click', () => {
+
+    if (expressionEvalMode) {
+        // you can add one period per number chunk
+        numericChunk = findNumericChunk(calc.inputStr);
+
+        if (numericChunk.length === 0) {
+            calc.inputStr = '0.';
+        } else {
+            if (numericChunk.search(/[.]/g) === -1) {
+                calc.inputStr += '.';
+            } else {
+                return;
+            }
+        }
+        updateDisplayEval();
+        return;
+    }
+
+
+    // Regular (non-expression evaluation) mode
     if (calc.inputStr.length === 0) {
         calc.inputStr = '0.';
     } else {
@@ -148,13 +183,25 @@ del.addEventListener('click', () => {
 })
 
 add.addEventListener('click', () => {
+
+    if (expressionEvalMode) {
+        if (calc.inputStr.length === 0 || 
+                calc.inputStr === '-') {
+            return;
+        } else {
+            calc.inputStr = calc.inputStr + ' + ';
+            updateDisplayEval();
+            return;
+        }
+    }
+
     operate(addition);
 })
 
 subtract.addEventListener('click', () => {
     // Use to make negatives as well
     if (calc.inputStr.length === 0 && 
-            calc.lastOperator !== returnAns) { // after equals you can subtract
+            calc.lastOperator !== returnAns) { // after equals, subtract
         calc.inputStr = '-';
         updateDisplay();
         return;
@@ -192,10 +239,13 @@ percent.addEventListener('click', () => {
 });
 
 pi.addEventListener('click', () => {
+    // Pi as first input on cleared display
     if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
             calc.lastOperator !== returnAns) {
         calc.previewStr = calc.inputStr + '\u03C0';
         calc.inputStr += (Math.PI.toFixed(floatDec)).toString();
+    
+    // Multiplying a previous answer by pi
     } else if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
             calc.lastOperator === returnAns) {
         
@@ -214,6 +264,7 @@ pi.addEventListener('click', () => {
         calc.displayStr = '';
         calc.operand1 = 0;
     
+    // Multiplying current display by pi
     } else {
         // Format for preview first
         calc.displayStr = calc.inputStr;
@@ -231,10 +282,66 @@ pi.addEventListener('click', () => {
     updateDisplay();
 });
 
+fact.addEventListener('click', () => {
+
+    // Factorial cannot be first input
+    if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
+            calc.lastOperator !== returnAns) {
+        return;
+
+    // Factorial of previous answer
+    } else if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
+            calc.lastOperator === returnAns) {
+
+        // Format for preview first
+        calc.displayStr = calc.ans.toString();
+        truncateDecimals();
+        calc.previewStr = calc.displayStr + '!';
+        calc.displayStr = '';
+
+        // Format input as well
+        calc.ans = factorial(calc.ans);
+        calc.inputStr = calc.ans.toString();
+        calc.displayStr = calc.inputStr;
+        truncateDecimals();
+        calc.inputStr = calc.displayStr;
+        calc.displayStr = '';
+        calc.operand1 = 0;
+    
+    // Factorial of current input
+    } else {
+        // Format for preview first
+        calc.displayStr = calc.inputStr;
+        truncateDecimals();
+        calc.previewStr = calc.displayStr + '!';
+
+        // Next format input display
+        calc.inputStr = (factorial(+calc.inputStr)).toString();
+        calc.displayStr = calc.inputStr; // to format
+        truncateDecimals();
+        calc.inputStr = calc.displayStr;
+        calc.displayStr = '';
+    }
+    updatePreview();
+    updateDisplay();
+});
+
+
+// sqroot.addEventListener('click', () => {
+//     // Square root or negative square root of following input
+//     if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
+//             calc.lastOperator !== returnAns) {
+//         calc.previewStr = calc.inputStr + '\u221A(';
+//         calc.inputStr = calc.previewStr;
+//         updateDisplay();
+//         updatePreview();
+//             }
+// });
+
+
 equals.addEventListener('click', () => {
     operate(returnAns);
-    // If next key is a number, the operands should clear
-    // I'll add that to the event listeners for numbers
+    // If next key is a number, the operands should clear - added to event listeners for numbers
 });
 
 // Two operand functionality
@@ -355,7 +462,7 @@ function addCommas() {
     // Might have been better to work with the number Value, but...
     if (calc.displayStrNonDec.length > 0) {
         numArray = calc.displayStrNonDec.match(/[\-0-9]/g);
-        calc.displayStrNonDec = numArray.join('');
+        if (numArray) calc.displayStrNonDec = numArray.join('');
     }
     
     if (calc.displayStrNonDec.length > 3) {
@@ -421,10 +528,30 @@ function squareRoot(a, b) {
 };
 
 function raisePower(a, b) {
+    if (a < 0 && b > 0 && b < 1) {
+        calc.previewStr = "Keep it real!"
+        console.log("You raised a negative number to a fractional exponent, but negative numbers don't have real roots. Ignoring the exponent.");
+        updatePreview();
+        setTimeout( () => {
+            calc.previewStr = '';
+            updatePreview();
+        }, 3000);
+        return a;
+    }
     return a ** b;
 }
 
-function factorial(a, b) {
+function factorial(a) {
+    if (a < 0 || (a % 1 != 0)) {
+        calc.previewStr = "Math domain error"
+        console.log("The factorial operation can only be applied to positive integers");
+        updatePreview();
+        setTimeout( () => {
+            calc.previewStr = '';
+            updatePreview();
+        }, 3000);
+        return a;
+    }
     ans = 1;
     for (let i = a; i > 1; i--) {
         ans *= i;
@@ -506,6 +633,9 @@ window.addEventListener("keydown", (ev) => {
         case '%':
             btn = percent;
             break;
+        case '!':
+            btn = fact;
+            break;
         default:
             return;
     }
@@ -515,5 +645,5 @@ window.addEventListener("keydown", (ev) => {
 
     setTimeout( () => {
         btn.classList.remove('pressed');
-    }, 150);
+    }, 100);
 });
