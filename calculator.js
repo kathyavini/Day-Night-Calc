@@ -14,15 +14,14 @@ let power = document.querySelector('.power');
 let percent = document.querySelector('.percent');
 let pi = document.querySelector('.pi');
 let fact = document.querySelector('.factorial');
-let sqroot = document.querySelector('.root')
-
+let sqroot = document.querySelector('.root');
+let parentheses = document.querySelector('.parens');
 
 let expressionEvalMode = false;
-
+let squareRootMode = false;
 
 // Some adjusts for android font sizes and small screens
 // Respect large system font but truncate values so they fit
-
 let floatSci;
 let floatDec;
 let maxLength;
@@ -125,6 +124,19 @@ function updatePreview() {
 // Numbers
 for (let each of numbers) {
     each.addEventListener('click', () => {
+        if (expressionEvalMode) {
+            nonNumericChunk = findLastNonNumericChunk(calc.inputStr);
+            switch (nonNumericChunk) {
+                case '\u03C0 ':
+                case '% ':
+                case '! ':
+                case ')':
+                    return; // these need to be followed with operators
+            }
+            calc.inputStr = calc.inputStr + each.textContent;
+            updateDisplayEval();
+            return
+        }
         calc.inputStr = calc.inputStr + each.textContent;
         updateDisplay();
         // If equals was just pressed, a new number should be a reset
@@ -135,20 +147,24 @@ for (let each of numbers) {
     });
 }
 
-// Function buttons
+
+// Functions (non-operator)
 clear.addEventListener('click', () => {
     for (key in calc) {
         calc[key] = '';
     }
+    expressionEvalMode = false;
+    squareRootMode = false;
     updateDisplay();
     updatePreview();
 })
 
 decimal.addEventListener('click', () => {
-
+    
+    // Expression evaluation mode
     if (expressionEvalMode) {
-        // you can add one period per number chunk
-        numericChunk = findNumericChunk(calc.inputStr);
+        // you can only add one period per number chunk
+        numericChunk = findLastNumericChunk(calc.inputStr);
 
         if (numericChunk.length === 0) {
             calc.inputStr = '0.';
@@ -163,8 +179,7 @@ decimal.addEventListener('click', () => {
         return;
     }
 
-
-    // Regular (non-expression evaluation) mode
+    // Regular mode
     if (calc.inputStr.length === 0) {
         calc.inputStr = '0.';
     } else {
@@ -179,26 +194,33 @@ decimal.addEventListener('click', () => {
 
 del.addEventListener('click', () => {
     calc.inputStr = calc.inputStr.slice(0, -1);
-    updateDisplay();
+    if (expressionEvalMode && calc.inputStr === '') {
+        expressionEvalMode = false;
+        updateDisplayEval();
+    } else if (expressionEvalMode) {
+        updateDisplayEval();
+    } else {
+        updateDisplay();
+    }
 })
 
+// Operators
 add.addEventListener('click', () => {
-
     if (expressionEvalMode) {
-        if (calc.inputStr.length === 0 || 
-                calc.inputStr === '-') {
-            return;
-        } else {
-            calc.inputStr = calc.inputStr + ' + ';
-            updateDisplayEval();
-            return;
-        }
+        printOperator(' + ');
+        return;
     }
-
+    // Regular mode
     operate(addition);
 })
 
 subtract.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator(' - ');
+        return;
+    }
+    
+    // Regular mode
     // Use to make negatives as well
     if (calc.inputStr.length === 0 && 
             calc.lastOperator !== returnAns) { // after equals, subtract
@@ -210,23 +232,46 @@ subtract.addEventListener('click', () => {
         updateDisplay();
         return;
     }
+
     operate(subtraction);
 })
 
 
 divide.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator(' / ');
+        return;
+    }
+
+    //Regular Mode
     operate(division);
 })
 
 multiply.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator(' x ');
+        return;
+    }
+    // Regular mode
     operate(multiplication);
 })
 
 power.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator('^');
+        return;
+    }
+    // Regular mode
     operate(raisePower);
 });
 
 percent.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator('% ');
+        return;
+    }
+
+    // Regular mode
     if (calc.inputStr && calc.inputStr !== '-') {
         calc.inputStr = ((+calc.inputStr)/100).toString();
         updateDisplay();
@@ -239,6 +284,11 @@ percent.addEventListener('click', () => {
 });
 
 pi.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator('\u03C0 ');
+        return;
+    }
+    // Regular mode
     // Pi as first input on cleared display
     if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
             calc.lastOperator !== returnAns) {
@@ -283,6 +333,10 @@ pi.addEventListener('click', () => {
 });
 
 fact.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        printOperator('! ');
+        return;
+    }
 
     // Factorial cannot be first input
     if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
@@ -310,6 +364,7 @@ fact.addEventListener('click', () => {
     
     // Factorial of current input
     } else {
+        console.log("Making factorial of current input!");
         // Format for preview first
         calc.displayStr = calc.inputStr;
         truncateDecimals();
@@ -327,36 +382,82 @@ fact.addEventListener('click', () => {
 });
 
 
-// sqroot.addEventListener('click', () => {
-//     // Square root or negative square root of following input
-//     if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
-//             calc.lastOperator !== returnAns) {
-//         calc.previewStr = calc.inputStr + '\u221A(';
-//         calc.inputStr = calc.previewStr;
-//         updateDisplay();
-//         updatePreview();
-//             }
-// });
+sqroot.addEventListener('click', () => {
+    // Square root or negative square root of following input
+    // Nothing else allowed for simplicity!
+    if ((calc.inputStr.length === 0 || calc.inputStr === '-') && 
+            calc.lastOperator !== returnAns) {
+        calc.previewStr = calc.inputStr + '\u221A(';
+        calc.inputStr = calc.previewStr;
+        updateDisplay();
 
+        expressionEvalMode = true;
+        squareRootMode = true;
+    }
+});
+
+parentheses.addEventListener('click', () => {
+    if (expressionEvalMode && squareRootMode) {
+        if (printOperator(')')) {
+            console.log("I'm in squareRoot!");
+            printOperator(')');
+            calc.previewStr = evaluateExpression(calc.inputStr);
+            updatePreview();
+            calc.inputStr = calc.previewStr.slice(2, -1);
+            expressionEvalMode = false;
+            squareRootMode = false;
+            operate(squareRoot);
+            calc.inputStr = 1; // not used, but to prevent aborting
+            operate(returnAns);
+        }
+
+    } else if (expressionEvalMode) {
+        console.log("I'll put a closing parentheses if I can!");
+        if (printOperator(')')) {
+        }
+    } else if (calc.inputStr === ''){
+        console.log("My input is empty and I'm gonna enter expression eval mode!");
+        calc.inputStr = '(';
+        expressionEvalMode = true;
+        updateDisplayEval();
+    }
+    // } else if (printOperator('')) {
+    //     console.log("I'm going to enter evaluation mode after a num!");
+    //     calc.inputStr += ' x (';
+    //     expressionEvalMode = true;
+    //     updateDisplayEval();
+    // }
+});
 
 equals.addEventListener('click', () => {
+    if (expressionEvalMode) {
+        expressionEvalMode = false;
+        calc.inputStr = evaluateExpression(calc.inputStr).slice(1, -1);
+        console.log(calc);
+    }
     operate(returnAns);
-    // If next key is a number, the operands should clear - added to event listeners for numbers
 });
 
 // Two operand functionality
 function operate(mathFunction) {
-    calc.previewStr = ''; // for pi display
-    updatePreview();
+    // clear preview at the right times
+    switch (mathFunction) {
+        case multiplication:
+        case division:
+        case addition:
+        case subtraction:
+        case power:
+            calc.previewStr = '';
+            updatePreview()
+    }
 
-    // console.log(`Operand 1 is ${calc.operand1}`);
-    // console.log(`Operand 2 is ${calc.operand2}`);
 
     /* --- Make more robust to bad input ----*/
     // Pressing function buttons without number input should do nothing
     // Except if you have just returned an ans with equals
-    if ((!calc.inputStr || calc.inputStr == '-') && mathFunction !== returnAns && 
-                calc.lastOperator !== returnAns) {
+    if ((!calc.inputStr || calc.inputStr == '-') && 
+            mathFunction !== returnAns && 
+            calc.lastOperator !== returnAns) {
         // But you can update the operation being performed
         calc.lastOperator = mathFunction;
         return;
@@ -366,7 +467,7 @@ function operate(mathFunction) {
         return;
     }
     /* -----------------------------------*/
-
+    // Main functionality
     if (!calc.operand1) {
         calc.operand1 = +(calc.inputStr);
         calc.lastOperator = mathFunction;
@@ -380,11 +481,6 @@ function operate(mathFunction) {
     }
     updateDisplay();
     calc.inputStr = '';
-
-    // Refresh operands - basically only for divide by 0
-    if (isNaN(calc.operand1)) {
-        calc.operand1 = 0;
-    }
 }
 
 
@@ -419,7 +515,7 @@ function truncateDecimals() {
 
     // For a number that's all decimals
     // Six is kind of arbitrary but it seems like the max
-    // precision the  ans variable tends to store
+    // precision js tends to store for large floats?
     if (calc.displayStrDec.length >= 6 && 
             calc.displayStrNonDec.length <= 2) {
         shortFloat = (+calc.displayStr).toFixed(floatDec);
@@ -427,7 +523,7 @@ function truncateDecimals() {
     // Number that is all decimals plus medium length number
     } else if (calc.displayStr.length > maxLength && 
                 calc.displayStrNonDec.length > 2 && 
-                calc.displayStrNonDec.length <= (maxLength - 6)) { // mostly decimals
+                calc.displayStrNonDec.length <= (maxLength - 6)) {
         shortFloat = (+calc.displayStr).toFixed(floatDec - 3);
         calc.displayStr = shortFloat.toString();
     // Long decimals in a fairly long number
@@ -523,7 +619,17 @@ function addition(a, b) {
     return a + b;
 }
 
-function squareRoot(a, b) {
+function squareRoot(a) {
+    if (a < 0 ) {
+        calc.previewStr = "Keep it real!"
+        console.log("Negative numbers don't have real square roots.");
+        updatePreview();
+        setTimeout( () => {
+            calc.previewStr = '';
+            updatePreview();
+        }, 3000);
+        return a;
+    }
     return Math.sqrt(a);
 };
 
@@ -562,7 +668,6 @@ function factorial(a) {
 function returnAns(a, b) {
     return a;
 }
-
 
 
 // Key binds
@@ -635,6 +740,18 @@ window.addEventListener("keydown", (ev) => {
             break;
         case '!':
             btn = fact;
+            break;
+        case '(':
+            if (expressionEvalMode) {
+                return;
+            }
+            btn = parentheses;
+            break;
+        case ')':
+            if (!expressionEvalMode) {
+                return;
+            }
+            btn = parentheses;
             break;
         default:
             return;
