@@ -925,95 +925,6 @@ function returnAns(a, b) {
     return a;
 }
 
-
-// Key binds
-window.addEventListener("keydown", (ev) => {
-    switch(ev.key) {
-        case ' ':
-            ev.preventDefault();
-            break;
-        case '/':
-            ev.preventDefault();
-            btn = divide;
-            break;
-        case '*':
-            btn = multiply;
-            break;
-        case '=':
-        case '+':
-            btn = add;
-            break;
-        case '-':
-            btn = subtract;
-            break;
-        case 'Backspace':
-            btn = del;
-            break;
-        case 'Escape':
-            btn = clear;
-            break;
-        case '1':
-            btn = document.querySelector('.num1');
-            break;
-        case '2':
-            btn = document.querySelector('.num2');
-            break;
-        case '3':
-            btn = document.querySelector('.num3');
-            break;
-        case '4':
-            btn = document.querySelector('.num4');
-            break;
-        case '5':
-            btn = document.querySelector('.num5');
-            break;
-        case '6':
-            btn = document.querySelector('.num6');
-            break;
-        case '7':
-            btn = document.querySelector('.num7');
-            break;
-        case '8':
-            btn = document.querySelector('.num8');
-            break;
-        case '9':
-            btn = document.querySelector('.num9');
-            break;
-        case '0':
-            btn = document.querySelector('.num0');
-            break;
-        case 'Enter':
-            ev.preventDefault();
-            btn = document.querySelector('.equals');
-            break;
-        case '.':
-            btn = decimal;
-            break;
-        case '^':
-            btn = power;
-            break;
-        case '%':
-            btn = percent;
-            break;
-        case '!':
-            btn = fact;
-            break;
-        case '(':
-        case ')':
-            btn = parentheses;
-            break;
-        default:
-            return;
-    }
-
-    btn.click();
-    btn.classList.add('pressed');
-
-    setTimeout( () => {
-        btn.classList.remove('pressed');
-    }, 100);
-});
-
 /* For resetting the display and starting fresh after
  returning an answer. Triggered by an open parenthesis, 
  number, or square root after equals. */
@@ -1029,4 +940,20 @@ function clearAfterEquals() {
 function changePreviewOnEquals(newPreview='') {
     updatePreview();
     calc.previewStr = newPreview;
+}
+
+
+// Key binds
+window.addEventListener("keydown", (ev) => {
+    const btn = document.querySelector(`button[data-key="${ev.key}"]`);
+    if (!btn) return
+    btn.click();
+    btn.classList.add('pressed');
+})
+
+const allButtons = document.querySelectorAll('button');
+allButtons.forEach(btn => btn.addEventListener('transitionend', removeTransition));
+function removeTransition(ev) {
+    if (ev.propertyName !== "filter") return
+    this.classList.remove('pressed');
 }

@@ -135,7 +135,7 @@ button {
     font-size: 20px;
     background-color: var(--buttons);
     color: var(--text-light);
-    /* transition: 0s 150ms; */
+    transition: 70ms;
 }
 
 .small {
@@ -159,7 +159,6 @@ button {
 button:active,
 button.pressed {
     filter: brightness(1.5);
-    /* transition: 0s; */
 }
 
 @media (hover: none) and (orientation: landscape) {
