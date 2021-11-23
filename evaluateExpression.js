@@ -8,8 +8,8 @@ Return value is also a string.
 
 String formatting:
 - there must be spaces around all binary operators (except ^)
-- there must be no space before and one space after unary
-    operators (even when followed by a term-closing parenthesis)
+- there must be no space before and one space after unary operators
+    (even when followed by a term-closing parenthesis)
 - all parentheses must be matched
 - there must be no extra whitespace
 - superfluous parentheses (e.g enclosing the whole expression or 
@@ -170,6 +170,7 @@ function parseOperator(expressionStr, operatorFunction,
                 break;
             case '(':
             case undefined: //start of line
+            case ' ': // pi after an operator
                 opStr1 = 1;
                 stringBefore = tempSubStr1;
                 break;
@@ -439,8 +440,6 @@ function lastTwoChars() {
 function lastChar() {
     return calc.inputStr.slice(-1);
 }
-
-
 
 function numOpenParens() {
     let match = calc.inputStr.match(/\(/g);
