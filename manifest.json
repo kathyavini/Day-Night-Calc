@@ -15,7 +15,7 @@
         "purpose": "any maskable"
       }
     ],
-    "description": "An Android-12 themed calculator for any time of day... in Vancouver",
+    "description": "An Android 12-style calculator that themes automatically based on sunrise and sunset... in Vancouver!",
     "display_override": "standalone",
     "display": "fullscreen"
   }
