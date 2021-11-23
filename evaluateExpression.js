@@ -11,25 +11,21 @@ String formatting:
 - there must be no space before and one space after unary
     operators (even when followed by a term-closing parenthesis)
 - all parentheses must be matched
-- square root radicands can optionally be enclosed in parentheses
 - there must be no extra whitespace
 - superfluous parentheses (e.g enclosing the whole expression or 
-    individual operands) are fine
+    square root radicands) are fine
 - operations that produce non-real numbers will give a warning
     in the console and then generally adjust the operand to
     something acceptable, rather than halting the evaluation
 
-See below for an example of an acceptable string
-
+See below for an example of an acceptable string:
 */
-
 expressionStr = "(90π + 2! x 35^(5 - 3) + (3! x 2)% )";
-allNumbers = /[^e\+\-\.0-9]/g; // regEx string that stops on first non-numeric char
 
+consoleLogging = false; // Shows the expression at each iteration
+detailedLogging = false; // Extreme detail. Shows operands and substrings
 
-consoleLogging = true; // Shows the expression at each iteration
-detailedLogging = true; // Extreme detail. Shows operands and substrings
-
+allNumbers = /[^e\+\-\.0-9]/g; // Halts on the first non-numeric char including sci notation
 
 function evaluateExpression(inputStr) {
 
@@ -331,7 +327,10 @@ function testOperator(opString) {
                     return true;
             }
             switch (lastChar()) {
-                case ')':
+                case ')': // must be followed by operation
+                case '%': // these combos can happen after using delete
+                case '!':
+                case '\u03C0':
                     if (helperLogging) console.log("Binary operator can follow this char");
                     return true;
             }
@@ -382,6 +381,7 @@ function testOperator(opString) {
                     return true;
             }
             break;
+
         // Unary operators
         case '% ':
         case '! ':
@@ -392,7 +392,7 @@ function testOperator(opString) {
             }
             break;
         
-        // Pi is kind of like a unary operator and kind of like a number
+        // Pi is like a unary operator and a number both, depending on context
         case '\u03C0 ': //pi
             switch (lastChar()) {
                 case ')': // can multiply an expression by pi
@@ -400,7 +400,7 @@ function testOperator(opString) {
                     if (helperLogging) console.log("Pi can follow this char");
                     return true;
                 }
-                switch (lastTwoChars()) { // basically where a number goes
+                switch (lastTwoChars()) { // basically anywhere a number can go
                     case 'x ':
                     case '+ ':
                     case '/ ':
@@ -410,9 +410,7 @@ function testOperator(opString) {
                         if (helperLogging) console.log("Pi can follow this char");
                         return true;
             }
-
-        break;
-            
+        break;  
     }
 
     // All else - good after numbers; i.e. can't chain operators
@@ -467,7 +465,6 @@ function newOpenParensAllowed() {
         case '^':
             return true;
     }
-
     switch (lastTwoChars()) {
         case 'x ':
         case '/ ':
@@ -475,6 +472,5 @@ function newOpenParensAllowed() {
         case '- ': // allowing a new binary term to be opened
             return true;
     }
-    
     return false;
 }
