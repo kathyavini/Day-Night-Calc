@@ -77,7 +77,6 @@
 
 .display {
     width: calc(100% + 20px);
-    overflow-x: auto;
     max-height: 100%;
     text-align: right;
     background-color: var(--display);
@@ -98,6 +97,21 @@
     color: var(--text-light);
     background-color: var(--display);
     text-align: right;
+    display: flex;
+    flex-direction: row-reverse;
+    flex: none;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.disable-scrollbars::-webkit-scrollbar {
+    background: transparent; /* Chrome/Safari/Webkit */
+    width: 0px;
+  }
+      
+.disable-scrollbars {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
 }
 
 .display-main:focus {
