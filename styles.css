@@ -123,6 +123,11 @@
     font-size: 30px;
     flex: 0 0 auto;
     color: var(--light-main);
+    display: flex;
+    flex-direction: row-reverse;
+    flex: none;
+    white-space: nowrap;
+    overflow-x: auto;
 }
 
 button {
