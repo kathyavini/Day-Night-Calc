@@ -326,6 +326,12 @@ function testOperator(opString) {
                     // but you don't want to double the space
                     calc.inputStr = calc.inputStr.slice(0, -1);
                     return true;
+                // ditto for the versions with parentheses
+                case ' )':
+                    if (helperLogging) console.log("Binary operator can follow this char");
+                    // but you don't want to double the space
+                    calc.inputStr = calc.inputStr.slice(0, -2) + ')';
+                    return true;
             }
             switch (lastChar()) {
                 case ')': // must be followed by operation
@@ -375,12 +381,25 @@ function testOperator(opString) {
             }
             break;
         case '^':
-            switch(lastChar()) {
-                // Again only relevant for future nesting functionality
-                case ')':
-                    if (helperLogging) console.log("Likewise, useful to raise an expression to a power");
+            switch(lastTwoChars()) {
+                // At the moment raising a unary operator
+                // expression to a power cannot work
+                // unary operators require the space
+                // and ^ wants both terms snug...
+                
+                // However, it can work if you wrap the
+                // unary term in parentheses
+                case ' )':
+                    if (helperLogging) console.log("You can raise this to a power");
+                    // but you need to get rid of the space
+                    calc.inputStr = calc.inputStr.slice(0, -2) + ')';
                     return true;
-            }
+                }
+                switch(lastChar()) {
+                    case ')': // i.e. just standard after a number
+                        if (helperLogging) console.log("You can raise an expression to a power");
+                        return true;
+                }
             break;
 
         // Unary operators
