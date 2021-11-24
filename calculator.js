@@ -542,7 +542,7 @@ parentheses.addEventListener('click', () => {
             updateDisplay();
     
             // And finish the operand there
-            operate(returnAns);
+            equals.click();
             expressionEvalMode = false;
 
         } else { // Closing a parenthesis but not the final one
@@ -945,7 +945,11 @@ function changePreviewOnEquals(newPreview='') {
 
 // Key binds
 window.addEventListener("keydown", (ev) => {
-    const btn = document.querySelector(`button[data-key="${ev.key}"]`);
+    let btn = document.querySelector(`button[data-key="${ev.key}"]`);
+    
+    // Oops, this new method broke both parentheses mapping to the same key
+    if (ev.key == ')') btn = parentheses; 
+
     if (!btn) return
     btn.click();
     btn.classList.add('pressed');
