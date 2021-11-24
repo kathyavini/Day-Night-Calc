@@ -945,15 +945,97 @@ function changePreviewOnEquals(newPreview='') {
 
 // Key binds
 window.addEventListener("keydown", (ev) => {
-    let btn = document.querySelector(`button[data-key="${ev.key}"]`);
-    
-    // Oops, this new method broke both parentheses mapping to the same key
-    if (ev.key == ')') btn = parentheses; 
+    switch(ev.key) {
+        case ' ':
+            ev.preventDefault();
+            break;
+        case '/':
+            ev.preventDefault();
+            btn = divide;
+            break;
+        case '*':
+            btn = multiply;
+            break;
+        case '=':
+        case '+':
+            btn = add;
+            break;
+        case '-':
+            btn = subtract;
+            break;
+        case 'Backspace':
+            btn = del;
+            break;
+        case 'Escape':
+            btn = clear;
+            break;
+        case '1':
+            btn = document.querySelector('.num1');
+            break;
+        case '2':
+            btn = document.querySelector('.num2');
+            break;
+        case '3':
+            btn = document.querySelector('.num3');
+            break;
+        case '4':
+            btn = document.querySelector('.num4');
+            break;
+        case '5':
+            btn = document.querySelector('.num5');
+            break;
+        case '6':
+            btn = document.querySelector('.num6');
+            break;
+        case '7':
+            btn = document.querySelector('.num7');
+            break;
+        case '8':
+            btn = document.querySelector('.num8');
+            break;
+        case '9':
+            btn = document.querySelector('.num9');
+            break;
+        case '0':
+            btn = document.querySelector('.num0');
+            break;
+        case 'Enter':
+            ev.preventDefault();
+            btn = document.querySelector('.equals');
+            break;
+        case '.':
+            btn = decimal;
+            break;
+        case '^':
+            btn = power;
+            break;
+        case '%':
+            btn = percent;
+            break;
+        case '!':
+            btn = fact;
+            break;
+        case '(':
+            if (expressionEvalMode && !newOpenParensAllowed()) return;
+            btn = parentheses;
+            break;
+        case ')':
+            if (!expressionEvalMode || newOpenParensAllowed()) return
+            btn = parentheses;
+            break;
+        case '√': // just learned this is option-v on mac! ;)
+            btn = sqroot;
+            break;
+        case 'π': // option-p on mac
+            btn = pi;
+            break;
+        default:
+            return;
+    }
 
-    if (!btn) return
     btn.click();
     btn.classList.add('pressed');
-})
+});
 
 const allButtons = document.querySelectorAll('button');
 allButtons.forEach(btn => btn.addEventListener('transitionend', removeTransition));
