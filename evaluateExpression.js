@@ -9,51 +9,48 @@ Return value is also a string.
 String formatting:
 - there must be spaces around all binary operators (except ^)
 - there must be no space before and one space after unary operators
-    (even when followed by a term-closing parenthesis)
+    except when followed by a term-closing parenthesis ')'
 - all parentheses must be matched
 - there must be no extra whitespace
 - superfluous parentheses (e.g enclosing the whole expression or 
     square root radicands) are fine
 - operations that produce non-real numbers will give a warning
-    in the console and then generally adjust the operand to
-    something acceptable, rather than halting the evaluation
+    in the console and will adjust the operand to something 
+    acceptable, rather than halting the evaluation
 
-See below for an example of an acceptable string:
-*/
-expressionStr = "(90π + 2! x 35^(5 - 3) + (3! x 2)% )";
+See below for an example of an acceptable string:*/
 
+expressionStr = "(90π + (√4)! x 35^(5 - 3) + (3! x 2)% )";
 consoleLogging = false; // Shows the expression at each iteration
-detailedLogging = false; // Extreme detail. Shows operands and substrings
 
-allNumbers = /[^e\+\-\.0-9]/g; // Halts on the first non-numeric char including sci notation
+const allNumbers = /[^e\+\-\.0-9]/g; /* This regex matches the first 
+non-numeric char, allowing negative signs and scientific notation */
 
 function evaluateExpression(inputStr) {
 
     if (consoleLogging) console.log(`Evaluating: ${inputStr}`);
 
-    // Parentheses - works with nesting but the calc won't generate that
+    // Parentheses - will work with nesting as long as ( ) are matched
     let operatorRegex = /[\)]/g; // first parenthesis that is closed
     let operatorFunction = insideParens;
-    let allowedNumericRegex = /[\(]/g; // Anything up to the prev open parentheses
+    let allowedNumericRegex = /[\(]/g; // Allows everything up to the prev open parentheses
     let numOperands = 1;
 
     while (inputStr.search(operatorRegex) !== -1) {
 
-        if (detailedLogging) console.log(`Processing Parentheses`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
     }
 
-    // And square roots, which are around the parentheses
+    // Square roots
     operatorRegex = /\u221A/g;
     operatorFunction = squareRoot;
     allowedNumericRegex = allNumbers;
-    numOperands = 2; //testing if this is an easy way to get after the
+    numOperands = 2; // To select the operand to the right of the √; first operand unused
 
     while (inputStr.search(operatorRegex) !== -1) {
 
-        if (detailedLogging) console.log(`Processing Square Roots`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -67,7 +64,7 @@ function evaluateExpression(inputStr) {
 
 
     while (inputStr.search(operatorRegex) !== -1) {
-        if (detailedLogging) console.log(`Processing Factorial`);
+
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -81,7 +78,6 @@ function evaluateExpression(inputStr) {
 
     while (inputStr.search(operatorRegex) !== -1) {
 
-        if (detailedLogging) console.log(`Processing Percents`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -95,7 +91,6 @@ function evaluateExpression(inputStr) {
 
     while (inputStr.search(operatorRegex) !== -1) {
 
-        if (detailedLogging) console.log(`Processing Pi's`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -109,7 +104,6 @@ function evaluateExpression(inputStr) {
 
     while (inputStr.search(operatorRegex) !== -1) {
 
-        if (detailedLogging) console.log(`Processing Exponents`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -122,7 +116,6 @@ function evaluateExpression(inputStr) {
     numOperands = 2;
 
     while (inputStr.search(operatorRegex) !== -1) {
-        if (detailedLogging) console.log(`Processing Multiplication and Division`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -135,7 +128,6 @@ function evaluateExpression(inputStr) {
     numOperands = 2;
 
     while (inputStr.search(operatorRegex) !== -1) {
-        if (detailedLogging) console.log(`Processing Addition and Subtraction`);
         inputStr = parseOperator(inputStr, operatorFunction,
                 operatorRegex, allowedNumericRegex, numOperands);
         if (consoleLogging) console.log(inputStr);
@@ -154,36 +146,53 @@ function parseOperator(expressionStr, operatorFunction,
 
     // First Operand
     let tempSubStr1 = expressionStr.slice(0, index);
-    let opStr1 = lastNumericChunk(tempSubStr1, allowedNumericRegex);    
+    let operandStr1 = lastNumericChunk(tempSubStr1, allowedNumericRegex);
     
-    let stringBefore;    
-    if (operatorFunction == insideParens) {
-        stringBefore = tempSubStr1.slice(0, -(opStr1.length + 1));
-    } else if (operatorFunction == squareRoot) {
-        stringBefore = tempSubStr1; // there is no operand before this operator
-    } else if (operatorFunction == multiplyByPi) {
-        // some exceptions for standalone pi and neg pi
+    // Exceptions for standalone pi and neg pi
+    if (operatorFunction == multiplyByPi) {
         switch (expressionStr[index-1]) {
-            case '-':
-                opStr1 = '-1';
-                stringBefore = tempSubStr1.slice(0, -1)
+            case '-': // really stands for -1
+                operandStr1 = '-1';
                 break;
             case '(':
             case undefined: //start of line
             case ' ': // pi after an operator
-                opStr1 = 1;
-                stringBefore = tempSubStr1;
+                operandStr1 = 1;
                 break;
-            default:
-                stringBefore = tempSubStr1.slice(0, -opStr1.length);
         }
-            
-    } else {
-        stringBefore = tempSubStr1.slice(0, -opStr1.length);
     }
-
-    if (detailedLogging) console.log(`Identified first operand as: ${opStr1}`);
-    if (detailedLogging) console.log(`Previous String is: ${stringBefore}`);
+    
+    let stringBefore;
+    switch (operatorFunction) {
+        case insideParens:
+            // + 1 to account for the open parenthesis
+            stringBefore = tempSubStr1.slice(0, 
+                -(operandStr1.length + 1));
+            break;
+        case squareRoot:
+            // no operand before this operator
+            stringBefore = tempSubStr1; 
+            break;
+        case multiplyByPi:
+             // Standalone pi and neg pi
+            switch (expressionStr[index-1]) {
+                case '-': // length of 1
+                    stringBefore = tempSubStr1.slice(0, -1)
+                    break;
+                case '(': // length of 0
+                case undefined:
+                case ' ': 
+                    stringBefore = tempSubStr1;
+                    break;
+                default: // E.g. 40π
+                    stringBefore = tempSubStr1.slice(0, 
+                        -operandStr1.length);
+            }
+            break;
+        default:
+            stringBefore = tempSubStr1.slice(0, 
+                -operandStr1.length);
+    }
 
 
     // Single operand evaluation
@@ -194,18 +203,15 @@ function parseOperator(expressionStr, operatorFunction,
     if (numOperands === 1 ) {
 
         if (operatorFunction == insideParens) {
-            ans = operatorFunction(opStr1);
+            ans = operatorFunction(operandStr1);
         } else {
-            ans = operatorFunction(+opStr1);
+            ans = operatorFunction(+operandStr1);
         }
         
         stringAfter = expressionStr.slice(index + 1);
         
         newStr = stringBefore + ans.toString() + stringAfter;
 
-        if (detailedLogging) console.log(`Answer is: ${ans}`);
-        if (detailedLogging) console.log(`String after is: ${stringAfter}`);
-        
         return newStr;
     }
 
@@ -219,33 +225,28 @@ function parseOperator(expressionStr, operatorFunction,
         tempSubStr2 = expressionStr.slice(index + 1); // e.g. exponent, square root since the parenthesis was removed at previous step
     }
 
-    let opStr2 = firstNumericChunk(tempSubStr2, allowedNumericRegex);
-    stringAfter = tempSubStr2.slice(opStr2.length);
-
-    if (opStr2 === '-') opStr1 = '-1';
-
-    if (detailedLogging) console.log(`Identified second operand as: ${opStr2}`);
-    if (detailedLogging) console.log(`Following String is: ${stringAfter}`);
-
+    let operandStr2 = firstNumericChunk(tempSubStr2, allowedNumericRegex);
+    stringAfter = tempSubStr2.slice(operandStr2.length);
 
     // Two operand evaluation
     if (operatorFunction == multOrDivide || operatorFunction == addOrSubtract) {
         // Need to figure out which operation it is
         let currentOperator = expressionStr[index + 1];
         let currentFunction = operatorFunction(currentOperator);
-        ans = currentFunction(+opStr1, +opStr2);
+        ans = currentFunction(+operandStr1, +operandStr2);
     } else if (operatorFunction == squareRoot) {
         // In this case only after the root matters
-        ans = operatorFunction(+opStr2);
+        ans = operatorFunction(+operandStr2);
     } else {
         // Only exponent in this form right now
-        ans = operatorFunction(+opStr1, +opStr2);
+        ans = operatorFunction(+operandStr1, +operandStr2);
     }
 
     newStr = stringBefore + ans.toString() + stringAfter;
 
     return newStr;
 }
+
 
 function takePercent(a) {
     return a/100;
@@ -304,10 +305,9 @@ function firstNumericChunk(inputStr, allowedNumericRegex=/[^e\+\-\.0-9]/g) {
 }
 
 
-// Functions for testing and modifying the calc.inputString in eval mode
+// Functions for modifying the calc.inputString in eval mode
 function testOperator(opString) {
 
-    if (helperLogging) console.log(`Operator being tested is ${opString}`);
     // Some allowed exceptions
     switch (opString) {
 
@@ -322,23 +322,23 @@ function testOperator(opString) {
                 case '% ':
                 case '! ':
                 case '\u03C0 ': //pi
-                    if (helperLogging) console.log("Binary operator can follow this char");
                     // but you don't want to double the space
                     calc.inputStr = calc.inputStr.slice(0, -1);
                     return true;
+
                 // ditto for the versions with parentheses
                 case ' )':
-                    if (helperLogging) console.log("Binary operator can follow this char");
-                    // but you don't want to double the space
+                    // Remove space
                     calc.inputStr = calc.inputStr.slice(0, -2) + ')';
                     return true;
             }
             switch (lastChar()) {
-                case ')': // must be followed by operation
-                case '%': // these combos can happen after using delete
+                // These versions without trailing space can occur after using
+                // delete on a subsequent binary operator
+                case ')':
+                case '%':
                 case '!':
                 case '\u03C0':
-                    if (helperLogging) console.log("Binary operator can follow this char");
                     return true;
             }
             break;
@@ -346,7 +346,6 @@ function testOperator(opString) {
         // Special cases parentheses can follow
         case ')':
             if (numOpenParens() <= numCloseParens()) {
-                if (helperLogging) console.log("No unmatched parentheses");
                 return false;
             }
 
@@ -354,16 +353,13 @@ function testOperator(opString) {
                 case '% ':
                 case '! ':
                 case '\u03C0 ': //pi
-                    if (helperLogging) console.log("A closing parenthesis can go here");
                     return true;
                 }
             switch (lastChar()) {
                 case ')':
-                    if (helperLogging) console.log("A closing parenthesis can go here");
                     return true;
             }
         // Kind of a strange one. Good for most except after numbers
-        // But probably won't be used unless I add nesting functionality
         case '(':
             switch(lastChar()) {
                 case '^':
@@ -382,22 +378,19 @@ function testOperator(opString) {
             break;
         case '^':
             switch(lastTwoChars()) {
-                // At the moment raising a unary operator
-                // expression to a power cannot work
-                // unary operators require the space
-                // and ^ wants both terms snug...
+                /* Raising a unary operator expression to a power directly
+                cannot work because unary operators require the space to be 
+                parsed and and ^ wants both terms snug...
                 
-                // However, it can work if you wrap the
-                // unary term in parentheses
+                However, it will work if you wrap the
+                unary term in parentheses */
                 case ' )':
-                    if (helperLogging) console.log("You can raise this to a power");
                     // but you need to get rid of the space
                     calc.inputStr = calc.inputStr.slice(0, -2) + ')';
                     return true;
                 }
                 switch(lastChar()) {
                     case ')': // i.e. just standard after a number
-                        if (helperLogging) console.log("You can raise an expression to a power");
                         return true;
                 }
             break;
@@ -406,8 +399,8 @@ function testOperator(opString) {
         case '% ':
         case '! ':
             switch (lastChar()) {
+                // Can be applied to expression terms
                 case ')':
-                    if (helperLogging) console.log("Unary operator can follow this char");
                     return true;
             }
             break;
@@ -417,17 +410,15 @@ function testOperator(opString) {
             switch (lastChar()) {
                 case ')': // can multiply an expression by pi
                 case '(': // can start a term with pi
-                    if (helperLogging) console.log("Pi can follow this char");
                     return true;
                 }
-                switch (lastTwoChars()) { // basically anywhere a number can go
+                switch (lastTwoChars()) { // Using π where a number can go
                     case 'x ':
                     case '+ ':
                     case '/ ':
                     case '- ':
                     case ' (':
                     case '√(':
-                        if (helperLogging) console.log("Pi can follow this char");
                         return true;
             }
         break;  
@@ -436,10 +427,8 @@ function testOperator(opString) {
     // All else - good after numbers; i.e. can't chain operators
     numericChunk = lastNumericChunk(calc.inputStr);
     if (numericChunk.length === 0) {
-        if (helperLogging) console.log("No numbers in this chunk");
         return false
     }
-    if (helperLogging) console.log("That was a number so good to go");
     return true;
 }
 
@@ -479,7 +468,7 @@ function numCloseParens() {
 function newOpenParensAllowed() {
 
     switch (lastChar()) {
-        case '(': // allowing one level of nesting
+        case '(': // One level of nesting allowed. Then it will fail testOperator
         case '^':
             return true;
     }

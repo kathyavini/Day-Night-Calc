@@ -20,9 +20,6 @@ let parentheses = document.querySelector('.parens');
 let expressionEvalMode = false;
 let squareRootMode = false;
 
-let helperLogging = false; // detailed console logging for troubleshooting
-let helperLoggingPrettify = false; // detailed logging for display formatting
-
 // Some adjusts for android font sizes and small screens
 // Respect large system font but truncate values so they fit
 let floatSci;
@@ -87,7 +84,7 @@ const calc = {
     'displayStr':'',
     'previewStr':'',
     'lastOperator':'',
-    'operand1': '', // sometimes using as string and sometimes number :( Yikes
+    'operand1': '',
     'operand2': '', 
 }
 
@@ -126,7 +123,7 @@ for (let each of numbers) {
                     return; // these need to be followed with operators
             }
             switch (lastChar()) { // these patterns are possible if using delete
-                case ')':// also needs operator
+                case ')': // also needs operator
                 case '%':
                 case '!':
                 case '\u03C0': 
@@ -204,6 +201,11 @@ del.addEventListener('click', () => {
             case '!':
             case '\u03C0': // pi
                 calc.inputStr = calc.inputStr.slice(0, -1);
+                break;
+        }
+        switch (lastTwoChars()) {
+            case '√(':
+                calc.inputStr = calc.inputStr.slice(0, -2);
                 break;
         }
         updateDisplayEval();
@@ -328,7 +330,7 @@ percent.addEventListener('click', () => {
 
 pi.addEventListener('click', () => {
     if (expressionEvalMode) {
-        printOperator('\u03C0 ');
+        printOperator('\u03C0 '); // Pi
         return;
     }
 
@@ -359,8 +361,6 @@ pi.addEventListener('click', () => {
 
         // Format input
         calc.operand1 = truncateDecimals((calc.operand1 * Math.PI).toString());
-        
-        operate(returnAns);
 
     
     // Multiplying input in the process of being entered by pi
@@ -370,15 +370,11 @@ pi.addEventListener('click', () => {
         calc.previewStr = makePreviewString() + truncateDecimals(calc.inputStr) + '\u03C0'
 
         // Format input display
-        calc.inputStr = truncateDecimals((+calc.inputStr * Math.PI).toString());
-        
-        operate(returnAns);
+        calc.inputStr = truncateDecimals((+calc.inputStr * Math.PI).toString()); 
     }
 
+    operate(returnAns);
     updatePreview();
-
-
-
 });
 
 fact.addEventListener('click', () => {
@@ -433,7 +429,7 @@ sqroot.addEventListener('click', () => {
             case '/ ':
             case '- ':
             case '+ ':
-                calc.inputStr += '\u221A(';
+                calc.inputStr += '\u221A('; // '√('
                 updateDisplayEval();
                 squareRootMode = true;
                 return
@@ -442,12 +438,12 @@ sqroot.addEventListener('click', () => {
             case '(':
             case '^':
             case '-':
-                calc.inputStr += '\u221A(';
+                calc.inputStr += '\u221A('; // '√('
                 updateDisplayEval();
                 squareRootMode = true;
                 return
-            default:
-                calc.inputStr += ' x \u221A(';
+            default: // make it explicit the prev term becomes the multiplicand
+                calc.inputStr += ' x \u221A('; // ' x √('
                 updateDisplayEval();
                 squareRootMode = true;
                 return
@@ -528,8 +524,6 @@ parentheses.addEventListener('click', () => {
         if (numOpenParens() === numCloseParens() + 1 && 
                     testOperator(')')) {
 
-            if (helperLogging) console.log("Exiting eval mode");
-
             printOperator(')');
 
             // Show expression being evaluated
@@ -547,15 +541,11 @@ parentheses.addEventListener('click', () => {
 
         } else { // Closing a parenthesis but not the final one
             
-            if (helperLogging) console.log("Just printing a )");
-
             printOperator(')');
         }
 
 
     } else if (calc.inputStr === ''){
-
-        if (helperLogging) console.log("My input is empty and I'm gonna enter expression eval mode!");
 
         calc.inputStr = '(';
 
@@ -577,7 +567,7 @@ equals.addEventListener('click', () => {
             setTimeout( () => {
                 calc.previewStr = '';
                 updatePreview();
-            }, 3000);
+            }, 1500);
 
             return
         }
@@ -600,42 +590,31 @@ function operate(mathFunction) {
             calc.previewStr = '';
             updatePreview();
     }
-    
-    
-    if (helperLogging) {
-        console.log("Here is the object I'm about to operate on:");
-        console.log(calc);
-    }
 
     /* ----- Check for bad input ------ */
     // Pressing function buttons without number input should do nothing
     // Except if you have just returned an ans with equals
-    if ((!calc.inputStr || calc.inputStr == '-') && 
+    if ((calc.inputStr === '' || calc.inputStr == '-') && 
             mathFunction !== returnAns && 
             calc.lastOperator !== returnAns) {
         // But you can update the operation being performed
         calc.lastOperator = mathFunction;
         return;
     // ignore an equals after an operation completely
-    } else if ((!calc.inputStr || calc.inputStr == '-') && mathFunction == returnAns && 
+    } else if ((calc.inputStr === '' || calc.inputStr == '-') && mathFunction == returnAns && 
         calc.lastOperator !== returnAns) {
         return;
     }
 
     // Main functionality
     if (!calc.operand1) {
-        calc.operand1 = +(calc.inputStr);
+        calc.operand1 = +calc.inputStr;
         calc.lastOperator = mathFunction;
     } else {
-        calc.operand2 = +(calc.inputStr);
+        calc.operand2 = +calc.inputStr;
         calc.operand1 = calc.lastOperator(calc.operand1, calc.operand2);
-        calc.displayStr = truncateDecimals(calc.operand1.toString());
         calc.lastOperator = mathFunction;
-    }
-
-    if (helperLogging) {
-        console.log("Here is the result of my operation:");
-        console.log(calc);
+        calc.displayStr = truncateDecimals(calc.operand1.toString());
     }
 
     updateDisplay();
@@ -663,44 +642,35 @@ function truncateDecimals(inputStr=calc.displayStr) {
 
     let [decimals, nonDecimals] = splitAtDecimal(inputStr);
 
-    // An attempt at a workaround to JS's precision issues
+    /* ---- An attempt at a workaround to JS's precision issues ----*/
     let precision;
-    if (helperLoggingPrettify) console.log([decimals, nonDecimals]);
 
-    if (decimals && decimals.search(/0/g) !== -1 && // else error
-                decimals.search(/e/g) === -1 &&  // don't touch sci notation
+    if (decimals && decimals.includes('0') && // else error
+                !decimals.includes('e') &&  // don't touch sci notation
                 decimals.match((/0/g)).length > 5) {
-        if (helperLoggingPrettify) console.log('Too many zeros; discarding them');
         inputStr = inputStr.slice(0, inputStr.search(/000000/g));
         // Discard decimal if ends up last char
-        if (inputStr.slice(-1) == '.') {
+        if (inputStr.endsWith('.')) {
             inputStr = inputStr.slice(0, -1);
         }
     }
 
-    if (decimals && decimals.match((/9/g)) && //otherwise error
-                decimals.search(/e/g) === -1 && 
+    if (decimals && decimals.includes('9') && //otherwise error
+                !decimals.includes('e') && 
                 decimals.match((/9/g)).length > 5) {
         
-        if (helperLoggingPrettify) console.log('Too many 9s; rounding up');
         precision = inputStr.slice(0, (inputStr.search(/999999/g))).length - 1;
         inputStr = (+inputStr).toPrecision(precision);
     }
 
     [decimals, nonDecimals] = splitAtDecimal(inputStr); // re-eval after precision adjusts
 
-
-    if (helperLoggingPrettify) {
-        console.log(`About to truncate ${inputStr}`);
-        console.log(`String Non-Decimal is ${nonDecimals.length} chars long`);
-        console.log(`String Decimal is ${decimals.length} chars long`);
-    }
+    /*--------------------------------------*/
+    // Normal truncating
 
      // Maintain existing scientific notation for decimals
-     if (decimals.length > floatSci && 
-                inputStr.search((/[e]/g)) !== -1) {
+     if (decimals.length > floatSci && inputStr.includes('e')) {
         inputStr = ((+inputStr).toExponential(floatSci)).toString();
-        if (helperLoggingPrettify) console.log("Was already sci notation decimal");
         return inputStr;
     }
 
@@ -709,21 +679,18 @@ function truncateDecimals(inputStr=calc.displayStr) {
             nonDecimals.length <= 2) { // basically all decimals
         shortFloat = (+inputStr).toFixed(floatDec);
         inputStr = shortFloat.toString();
-        if (helperLoggingPrettify) console.log("Treating as all decimals");
     // Number that is all decimals plus medium length number
     } else if (inputStr.length > maxLength && 
                 nonDecimals.length > 2 && 
                 nonDecimals.length <= (maxLength - 6)) {
         shortFloat = (+inputStr).toFixed(floatDec - 3);
         inputStr = shortFloat.toString();
-        if (helperLoggingPrettify) console.log("Treating as a medium number");
     // Long decimals in a fairly long number
     } else if (inputStr.length > maxLength && 
                 nonDecimals.length > (maxLength - 6)) {
         shortFloat = (+inputStr).
             toFixed(Math.max(2, maxLength - nonDecimals.length - 1));
         inputStr = shortFloat.toString();
-        if (helperLoggingPrettify) console.log("Treating as a large number");
     }
     
     // Apply scientific notation to large numbers
@@ -735,7 +702,6 @@ function truncateDecimals(inputStr=calc.displayStr) {
         plusIndex = inputStr.search((/[+]/g));
         inputStr = inputStr.slice(0, plusIndex) + 
             inputStr.slice(plusIndex + 1);
-        if (helperLoggingPrettify) console.log("Treating as number in need of sci notation");
     }
 
     return inputStr;
@@ -745,11 +711,6 @@ function truncateDecimals(inputStr=calc.displayStr) {
 function addCommas(inputStr=calc.displayStr) {
     
     let [decimals, nonDecimals] = splitAtDecimal(inputStr);
-
-    if (helperLoggingPrettify) {
-        console.log(`About to add commas to ${inputStr}`);
-        console.log([decimals, nonDecimals]);
-    }
 
     // If it's become large for JavaScript just return it
     if (inputStr === 'Infinity') {
@@ -764,7 +725,7 @@ function addCommas(inputStr=calc.displayStr) {
     }
 
     // Don't add commas to any sci notation
-    if (nonDecimals.search(/e/g) != -1) {
+    if (nonDecimals.includes('e')) {
         return inputStr;
     }
 
@@ -799,8 +760,7 @@ function addCommas(inputStr=calc.displayStr) {
     return inputStr;
 }
 
-// Show operands in the preview area
-// Could be extended if preview behaviour is changed
+// For showing the full expresison in the preview display
 function makePreviewString() {
     let opSymbol;
     switch (calc.lastOperator) {
@@ -824,7 +784,7 @@ function makePreviewString() {
     }
 
     let prevOperand = truncateDecimals(calc.operand1.toString());
-
+    
     return prevOperand + opSymbol;
 }
 
@@ -1037,8 +997,12 @@ window.addEventListener("keydown", (ev) => {
     btn.classList.add('pressed');
 });
 
+// This method from JavaScript 30 Drum Kit
 const allButtons = document.querySelectorAll('button');
-allButtons.forEach(btn => btn.addEventListener('transitionend', removeTransition));
+
+allButtons.forEach(btn => btn.addEventListener('transitionend', 
+        removeTransition));
+
 function removeTransition(ev) {
     if (ev.propertyName !== "filter") return
     this.classList.remove('pressed');
